@@ -1,0 +1,12 @@
+[
+  {
+    "key": "shift+enter",
+    "command": "jupyter.runAndSelectNextCell",
+    "when": "notebookEditorFocused"
+  },
+  {
+    "key": "ctrl+enter",
+    "command": "jupyter.execSelectionInteractive",
+    "when": "editorTextFocus && editorLangId == 'python' && !notebookEditorFocused"
+  }
+]
