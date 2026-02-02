@@ -31,5 +31,8 @@ ax[1].plot(exponential)
 ax[1].set_title("exponential decay")
 ax[2].plot(polynomial)
 ax[2].set_title("polynomial decay")
+plt.tight_layout()
+plt.savefig("./fig/3_lr_schedule.png")
 plt.show()
+plt.close()
 #%%

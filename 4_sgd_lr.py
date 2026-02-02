@@ -65,7 +65,9 @@ plt.title(f"Training Loss Curve (SGD) with step size {lr}", fontsize=13)
 
 plt.grid(alpha=0.3)
 plt.tight_layout()
+plt.savefig(f"./fig/3_lrplot_{int(lr*10):02d}.png")
 plt.show()
+plt.close()
 #%%
 ### contour plot
 w1 = np.arange(-0.5, 2.5, 0.02) # 150개의 값
@@ -90,5 +92,7 @@ plt.title(f"SGD (minibatch) with step size {lr}", fontsize=16)
 plt.xlabel("w", fontsize=14)
 plt.ylabel("b", fontsize=14)
 plt.tight_layout()
+plt.savefig(f"./fig/3_contour_{int(lr*10):02d}.png")
 plt.show()
+plt.close()
 #%%
