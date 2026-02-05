@@ -31,19 +31,27 @@ class LinReg(nn.Module):
 model = LinReg()
 model.train()
 #%%
-lr = 0.1 # learning rate
+lr = 1 # initial learning rate
 optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+
+### LR scheduling
+lam = 0.1
+print(f"gamma: {np.exp(-lam):.4f}")
+scheduler = torch.optim.lr_scheduler.ExponentialLR(
+    optimizer, gamma=np.exp(-lam)
+)
 
 loss_function = nn.MSELoss()
 #%%
-epochs = 15
+epochs = 100
 
-xs, ys, loss_history = [], [], []
+xs, ys, loss_history, lr_history = [], [], [], []
 for epoch in range(epochs):
     for x_batch, y_batch in loader:
         ### 현재 parameter의 value
         xs.append(model.linear.weight.detach().item())
         ys.append(model.linear.bias.detach().item())
+        lr_history.append(optimizer.param_groups[0]["lr"])  # 현재 lr 기록
         
         optimizer.zero_grad()
 
@@ -54,6 +62,9 @@ for epoch in range(epochs):
 
         loss.backward()
         optimizer.step()
+
+    ### exponential decay 적용 (epoch 기준)
+    scheduler.step()
 #%%
 ### 학습 경과에 따른 손실함수 확인
 plt.figure(figsize=(6, 3.5))
@@ -61,11 +72,24 @@ plt.figure(figsize=(6, 3.5))
 plt.plot(loss_history, linewidth=2)
 plt.xlabel("Iteration", fontsize=12)
 plt.ylabel("MSE Loss", fontsize=12)
-plt.title(f"Training Loss Curve (SGD) with step size {lr}", fontsize=13)
+plt.title("Training Loss Curve (SGD) with Exponential LR Decay", fontsize=13)
 
 plt.grid(alpha=0.3)
 plt.tight_layout()
-plt.savefig(f"./fig/3_lrplot_{int(lr*10):02d}.png")
+plt.savefig("./fig/3_loss_with_lr_scheduling.png")
+plt.show()
+plt.close()
+#%%
+plt.figure(figsize=(6, 3.5))
+
+plt.plot(lr_history, linewidth=2, color="orange")
+plt.xlabel("Iteration", fontsize=12)
+plt.ylabel("Learning Rate", fontsize=12)
+plt.title("LR with Exponential Decay",fontsize=13)
+
+plt.grid(alpha=0.3)
+plt.tight_layout()
+plt.savefig("./fig/3_lr_with_decay.png")
 plt.show()
 plt.close()
 #%%
@@ -92,7 +116,7 @@ plt.title(f"SGD (minibatch) with step size {lr}", fontsize=16)
 plt.xlabel("w", fontsize=14)
 plt.ylabel("b", fontsize=14)
 plt.tight_layout()
-plt.savefig(f"./fig/3_contour_{int(lr*10):02d}.png")
+plt.savefig("./fig/3_contour_with_lar_scheduling.png")
 plt.show()
 plt.close()
 #%%
