@@ -116,7 +116,7 @@ plt.title(f"SGD (minibatch) with step size {lr}", fontsize=16)
 plt.xlabel("w", fontsize=14)
 plt.ylabel("b", fontsize=14)
 plt.tight_layout()
-plt.savefig("./fig/3_contour_with_lar_scheduling.png")
+plt.savefig("./fig/3_contour_with_lr_scheduling.png")
 plt.show()
 plt.close()
 #%%
