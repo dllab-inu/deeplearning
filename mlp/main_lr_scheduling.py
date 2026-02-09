@@ -23,6 +23,10 @@ configs = {
     'batch_size': 1024,
     'epochs': 200,
     'lr': 0.001,
+
+    'factor': 0.5,
+    'patience': 3,
+    'threshold': 1e-4
 }
 #%%
 ### Random seed 설정
@@ -146,6 +150,13 @@ model.train() # 학습모드
 #%%
 loss_function = nn.BCEWithLogitsLoss() # model의 output이 logit일 때 사용하는 이진분류 손실함수
 optimizer = torch.optim.Adam(model.parameters(), lr=configs["lr"])
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer,
+    mode="max", # AUC는 클수록 좋음
+    factor=configs['factor'], # lr <- lr * factor
+    patience=configs['patience'], # patience epochs 동안 개선 없으면 lr 감소
+    threshold=configs['threshold'], # 개선으로 인정하는 최소 변화량
+)
 #%%
 def evaluate(model, val_loader):
     model.eval() # 평가모드
@@ -172,6 +183,7 @@ def evaluate(model, val_loader):
     auc = roc_auc_score(y_all, probs_all)
     return np.mean(loss_all), acc, f1, auc
 #%%
+curve_lr = []
 curve_train_loss, curve_train_acc, curve_train_f1, curve_train_auc = [], [], [], []
 curve_val_loss, curve_val_acc, curve_val_f1, curve_val_auc = [], [], [], []
 curve_test_loss, curve_test_acc, curve_test_f1, curve_test_auc = [], [], [], []
@@ -211,20 +223,29 @@ for epoch in range(configs["epochs"]):
     curve_test_f1.append(test_f1)
     curve_test_auc.append(test_auc)
 
-    print(f"Epoch: {epoch+1:02d} | Loss: {np.mean(loss_per_epoch):.4f}")
+    scheduler.step(val_auc) # lr scheduling step
+    current_lr = optimizer.param_groups[0]["lr"] # 현재 lr
+    curve_lr.append(current_lr)
+
+    print(f"Epoch: {epoch+1:02d} | Loss: {np.mean(loss_per_epoch):.4f} | lr={current_lr:.6f}")
     print(f"--> [Validation] Acc: {val_acc:.4f}, F1: {val_f1:.4f}, AUC:{val_auc:.4f}\n")
 #%%
-### 학습 진단 - 손실함수
-plt.figure(figsize=(5, 3))
-plt.plot(curve_train_loss, linewidth=2, label="[Train] Loss")
-plt.plot(curve_val_loss, linewidth=2, label="[Val] Loss")
-plt.plot(curve_test_loss, linewidth=2, label="[Test] Loss")
-plt.xlabel("Epochs", fontsize=12)
-plt.ylabel("BCE Loss", fontsize=12)
-plt.grid(alpha=0.3)
-plt.legend(fontsize=13)
+### 학습 진단 - 손실함수 및 lr
+fig, axes = plt.subplots(2, 1, figsize=(5, 6), sharex=True)
+axes[0].plot(curve_train_loss, linewidth=2, label="[Train] Loss")
+axes[0].plot(curve_val_loss, linewidth=2, label="[Val] Loss")
+axes[0].plot(curve_test_loss, linewidth=2, label="[Test] Loss")
+axes[0].set_ylabel("BCE Loss", fontsize=12)
+axes[0].grid(alpha=0.3)
+axes[0].legend(fontsize=11)
+
+axes[1].plot(curve_lr, linewidth=2, linestyle="--", color="black")
+axes[1].set_ylabel("Learning Rate", fontsize=12)
+axes[1].set_xlabel("Epochs", fontsize=12)
+axes[1].grid(alpha=0.3)
+
 plt.tight_layout()
-plt.savefig("./fig/4_training_loss.png")
+plt.savefig("./fig/4_training_loss_lr_scheduling.png")
 plt.show()
 plt.close()
 #%%
@@ -254,7 +275,7 @@ axes[2].set_xlabel("Epochs", fontsize=12)
 axes[2].set_ylabel("AUC-ROC", fontsize=12)
 axes[2].grid(alpha=0.3)
 plt.tight_layout()
-plt.savefig("./fig/4_metric_curve.png")
+plt.savefig("./fig/4_metric_curve_lr_scheduling.png")
 plt.show()
 plt.close()
 #%%
