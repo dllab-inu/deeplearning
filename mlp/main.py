@@ -37,13 +37,10 @@ torch.backends.cudnn.benchmark = False
 train_df = pd.read_csv("./data/train.csv", index_col=0)
 test_df = pd.read_csv("./data/test.csv", index_col=0)
 
-y_train = train_df["income"]
-y_test = test_df["income"]
-X_train = train_df.drop(columns=["income"])
-X_test = test_df.drop(columns=["income"])
-
-X_train_full = train_df.drop(columns=["income"])
 y_train_full = train_df["income"]
+X_train_full = train_df.drop(columns=["income"])
+y_test = test_df["income"]
+X_test = test_df.drop(columns=["income"])
 #%%
 ### 학습/검증/테스트 데이터 분할 (by random seed)
 X_train, X_val, y_train, y_val = train_test_split(
@@ -61,8 +58,8 @@ categorical_transformer = OneHotEncoder(
 
 preprocessor = ColumnTransformer(
     transformers=[
-        ("cat", categorical_transformer, obj_cols),
-        ("num", StandardScaler(), num_cols)
+        ("cat", categorical_transformer, obj_cols), # (이름, transformation, 지정된 열)
+        ("num", StandardScaler(), num_cols) # (이름, transformation, 지정된 열)
     ]
 )
 
@@ -78,16 +75,16 @@ for col, categories in zip(obj_cols, encoder.categories_):
 # 최종 데이터 구성
 print("[학습데이터] Input:", X_train_encoded.shape)
 print("[학습데이터] Output:", y_train.shape)
-print("[학습데이터] Input:", X_val_encoded.shape)
-print("[학습데이터] Output:", y_val.shape)
+print("[검증데이터] Input:", X_val_encoded.shape)
+print("[검증데이터] Output:", y_val.shape)
 print("[테스트데이터] Input:", X_test_encoded.shape)
 print("[테스트데이터] Output:", y_test.shape)
 #%%
 ### dataloader 구성
 class TabularDataset(Dataset):
     def __init__(self, x, y):
-        self.x = torch.tensor(x, dtype=torch.float32)
-        self.y = torch.tensor(y, dtype=torch.float32)
+        self.x = torch.tensor(x, dtype=torch.float32) # 설명변수
+        self.y = torch.tensor(y, dtype=torch.float32) # 반응변수
 
     def __len__(self):
         return len(self.y)
@@ -98,6 +95,8 @@ class TabularDataset(Dataset):
 train_dataset = TabularDataset(X_train_encoded, y_train.values[:, None])
 val_dataset = TabularDataset(X_val_encoded, y_val.values[:, None])
 test_dataset = TabularDataset(X_test_encoded, y_test.values[:, None])
+# y_train.values.shape
+# y_train.values[:, None].shape
 # train_dataset.__getitem__(3)
 # X_train_encoded[3]; y_train[3]
 
@@ -108,7 +107,7 @@ train_loader = DataLoader(
     train_dataset,
     batch_size=configs["batch_size"], shuffle=True, drop_last=False
 )
-# x, y = next(iter(train_loader))
+# x, y = next(iter(train_loader)) # 1개의 minibatch sampling
 # print(x.shape); print(y.shape)
 val_loader = DataLoader(
     val_dataset,
@@ -134,9 +133,9 @@ class MLP(nn.Module):
         for hidden_dim in configs["hidden_dim"]:
             net.append(nn.Linear(input_dim, hidden_dim))
             net.append(nn.ReLU())
-            input_dim = hidden_dim
+            input_dim = hidden_dim # 이전 layer의 output과 다음 layer의 input의 차원을 동일하게 맞춤
         net.append(nn.Linear(input_dim, 1))
-        self.net = nn.Sequential(*net)
+        self.net = nn.Sequential(*net) # (주의) nn.Sequential의 입력은 list가 아님
 
     def forward(self, x):
         return self.net(x)
@@ -158,7 +157,7 @@ def evaluate(model, val_loader):
         y = y.to(device)
         with torch.no_grad():
             logits = model(x) # [B, 1]
-            probs = logits.sigmoid()
+            probs = logits.sigmoid() # 확률값으로 변환
         loss = loss_function(logits, y)
         loss_all.append(loss.item()) # scalar
         probs_all.append(probs) # [B, 1]
@@ -181,8 +180,8 @@ for epoch in range(configs["epochs"]):
 
     loss_per_epoch = []
     for x, y in train_loader:
-        x = x.to(device)
-        y = y.to(device)
+        x = x.to(device) # minibatch를 device로 이동
+        y = y.to(device) # minibatch를 device로 이동
 
         optimizer.zero_grad()
         
