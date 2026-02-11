@@ -59,6 +59,13 @@ class MLP(nn.Module):
 model = MLP() # default configuration 사용
 model.train() # 학습모드
 #%%
+for p in model.parameters():
+    print(p)
+
+count_parameters = lambda model: sum(p.numel() for p in model.parameters() if p.requires_grad)
+num_params = count_parameters(model)
+print(f"Number of Parameters: {num_params}")
+#%%
 ### 학습을 위한 준비
 loss_function = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
@@ -69,10 +76,12 @@ loss_history = []
 for e in range(epochs):
     epoch_loss = []
     for x_batch, y_batch in loader:
+
+        optimizer.zero_grad() # gradient 초기화
+        
         pred = model(x_batch) # 모형 계산 (forward)
         loss = loss_function(pred, y_batch) # loss function 계산
 
-        optimizer.zero_grad() # gradient 초기화
         loss.backward() # gradient 계산
         optimizer.step() # SGD update
 
