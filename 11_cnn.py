@@ -119,3 +119,16 @@ print(output.var(dim=[1, 2], correction=0))
 print(layernorm.weight.shape) # gamma
 print(layernorm.bias.shape) # beta
 #%%
+### Layer normalization (4D input)
+x = torch.randn(size=(4, 32, 16, 8))
+layernorm = nn.LayerNorm(normalized_shape=[32, 16, 8])
+output = layernorm(x)
+
+print(f"Input shape: {x.shape}")
+print(f"Output shape: {output.shape}")
+print(output.mean(dim=[1, 2, 3]))
+print(output.var(dim=[1, 2, 3], correction=0))
+
+print(layernorm.weight.shape) # gamma
+print(layernorm.bias.shape) # beta
+#%%
