@@ -19,8 +19,8 @@ df["Date Time"] = pd.to_datetime(
     format="%d.%m.%Y %H:%M:%S"
 )
 #%%
-### 최근 6년간의 데이터만 추출
-start_date = "2011-01-01 00:00:00"
+### 최근 3년간의 데이터만 추출
+start_date = "2014-01-01 00:00:00"
 end_date   = "2016-12-31 23:59:59"
 
 target_df = df.loc[
@@ -30,26 +30,26 @@ target_df = df.loc[
 print(target_df.shape)
 print(target_df.head())
 #%%
-### 일별 평균 계산
-target_df["timestep"] = target_df["Date Time"].dt.floor("D") # 시분초 정보 제거
-target_df_daily = target_df.groupby("timestep")["T (degC)"].mean().reset_index() # 일별 평균 계산
+### 시간별 관측 데이터 추출
+target_df_hour = target_df.loc[
+    (target_df["Date Time"].dt.minute == 0) & (target_df["Date Time"].dt.second == 0)
+]
+target_df_hour.to_csv("./data/climate.csv")
 
-target_df_daily.to_csv("./data/climate.csv")
-
-print(target_df_daily.shape)
-print(target_df_daily.head())
+print(target_df_hour.shape)
+print(target_df_hour.head())
 #%%
 ### 시각화
 plt.figure(figsize=(15, 5))
 plt.plot(
-    target_df_daily["timestep"], target_df_daily["T (degC)"],
-    linewidth=0.8
+    target_df_hour["Date Time"].iloc[-1000:], target_df_hour["T (degC)"].iloc[-1000:],
+    linewidth=2
 )
-plt.xlabel("timesteps", fontsize=16)
-plt.ylabel("Temperature (degC)", fontsize=16)
-plt.xticks(fontsize=15)
-plt.yticks(fontsize=15)
-plt.title("Daily Average Temperature (2011-2016)", fontsize=17)
+plt.xlabel("timesteps", fontsize=18)
+plt.ylabel("Temperature (degC)", fontsize=18)
+plt.xticks(fontsize=16)
+plt.yticks(fontsize=16)
+plt.title("Daily Average Temperature", fontsize=19)
 plt.grid(alpha=0.3)
 plt.tight_layout()
 plt.savefig("./fig/observations.png")

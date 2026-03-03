@@ -10,7 +10,7 @@ import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
 #%%
 ### 데이터 불러오기
-df = pd.read_csv("./data/climate.csv", parse_dates=['timestep'], index_col=0)
+df = pd.read_csv("./data/climate.csv", parse_dates=['Date Time'], index_col=0)
 print(df.shape)
 print(df.head())
 #%%
@@ -35,7 +35,7 @@ torch.manual_seed(configs['seed'])
 np.random.seed(configs['seed'])
 #%%
 ### train, val / test split
-trainval_len = len(df.loc[df['timestep'] < "2016-01-01"])
+trainval_len = len(df.loc[df['Date Time'] < "2016-10-01"])
 trainval = df.iloc[:trainval_len]
 test = df.iloc[trainval_len - configs["lookback"]:] ### test dataset의 첫 번째 sequence의 input
 trainval.tail(30)
@@ -49,14 +49,16 @@ print(train.shape)
 print(val.shape)
 print(test.shape)
 #%%
+target = "T (degC)"
+
 ### 단변량 시계열 데이터 - T (degC)
-train_y = train[["T (degC)"]].values.astype("float32") # [T, 1]
+train_y = train[[target]].values.astype("float32") # [T, 1]
 train_y = torch.FloatTensor(train_y)
 
-val_y = val[["T (degC)"]].values.astype("float32") # [T, 1]
+val_y = val[[target]].values.astype("float32") # [T, 1]
 val_y = torch.FloatTensor(val_y)
 
-test_y = test[["T (degC)"]].values.astype("float32") # [T, 1]
+test_y = test[[target]].values.astype("float32") # [T, 1]
 test_y = torch.FloatTensor(test_y)
 #%%
 ### 표준화 - 학습데이터의 통계량만을 이용
@@ -177,7 +179,7 @@ for epoch in range(configs['epochs']):
     for x_batch, y_batch in train_loader:
         optimizer.zero_grad()
 
-        pred = model(x_batch) # [B, horizon, feature_dim]
+        pred = model(x_batch, y_batch) # 정답도 함께 넣어줌, [B, horizon, feature_dim]
 
         loss = loss_fn(pred, y_batch) # MSE
         train_losses.append(loss.item())
@@ -199,7 +201,7 @@ for epoch in range(configs['epochs']):
 
     train_history.append(train_mse)
     val_history.append(val_mse)
-    print(f"Epoch {epoch+1:3d}/{configs['epochs']} | Train MSE {train_mse:.4f} | Val MSE {val_mse:.4f}")
+    print(f"Epoch: {epoch+1:3d}/{configs['epochs']} | Train MSE: {train_mse:.4f} | Val MSE: {val_mse:.4f}")
 #%%
 ### loss values 시각화
 plt.figure(figsize=(7, 3))
@@ -231,7 +233,9 @@ print(forecast.shape)
 print(true.shape)
 #%%
 test_mse = (forecast - true).pow(2).mean()
+test_mse_lag = (forecast[1:] - true[:-1]).pow(2).mean()
 print(f"Test dataset MSE: {test_mse:.4f}")
+print(f"Test dataset MSE (lag 1): {test_mse_lag:.4f}")
 #%%
 ### horizon 간격으로 시계열을 이동
 forecast = forecast[::configs['horizon'], :].flatten()
@@ -242,11 +246,11 @@ forecast_scaled = forecast * std + mean
 true_scaled = true * std + mean
 #%%
 plt.figure(figsize=(10, 4))
-plt.plot(forecast_scaled, linewidth=1, label="Forecasting")
-plt.plot(true_scaled, linewidth=1, label="Test")
+plt.plot(forecast_scaled[-300:], linewidth=2, label="Forecasting")
+plt.plot(true_scaled[-300:], linewidth=2, label="Test")
 plt.xlabel("timestep", fontsize=14)
 plt.ylabel("T (degC)", fontsize=14)
-plt.title(f"Test dataset 예측 결과 (horizon={configs['horizon']})", fontsize=15)
+plt.title(f"Test dataset 예측 결과 (horizon={configs['horizon']}, MSE={test_mse:.4f})", fontsize=15)
 plt.grid(alpha=0.3)
 plt.legend(fontsize=14)
 plt.tight_layout()
