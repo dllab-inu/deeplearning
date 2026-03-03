@@ -17,8 +17,8 @@ print(df.head())
 configs = {
     'seed': 42,
 
-    'lookback': 28,
-    'horizon': 7,
+    'lookback': 48,
+    'horizon': 6,
     'val_ratio': 0.2,
 
     'feature_dim': 1, # 단변량
