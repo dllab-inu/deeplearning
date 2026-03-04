@@ -52,23 +52,23 @@ print(test.shape)
 target = "T (degC)"
 
 ### 단변량 시계열 데이터 - T (degC)
-train_y = train[[target]].values.astype("float32") # [T, 1]
-train_y = torch.FloatTensor(train_y)
+train = train[[target]].values.astype("float32") # [T, 1]
+train = torch.FloatTensor(train)
 
-val_y = val[[target]].values.astype("float32") # [T, 1]
-val_y = torch.FloatTensor(val_y)
+val = val[[target]].values.astype("float32") # [T, 1]
+val = torch.FloatTensor(val)
 
-test_y = test[[target]].values.astype("float32") # [T, 1]
-test_y = torch.FloatTensor(test_y)
+test = test[[target]].values.astype("float32") # [T, 1]
+test = torch.FloatTensor(test)
 #%%
 ### 표준화 - 학습데이터의 통계량만을 이용
-mean = train_y.mean()
-std = train_y.std() + 1e-6
+mean = train.mean()
+std = train.std() + 1e-6
 print(f"평균: {mean:.3f}, 표준편차: {std:.3f}")
 
-train_y = (train_y - mean) / std
-val_y = (val_y - mean) / std
-test_y = (test_y - mean) / std
+train = (train - mean) / std
+val = (val - mean) / std
+test = (test - mean) / std
 #%%
 ### window format dataset
     # dimension=0 - 시간 축 방향으로 슬라이딩
@@ -76,34 +76,34 @@ test_y = (test_y - mean) / std
     # step = 1 - 한 timestep씩 이동
 window_len = configs['lookback'] + configs['horizon']
 
-train_y = train_y.unfold(
+train = train.unfold(
     dimension=0, size=window_len, step=1
 ).permute(0, 2, 1) # [T, 1, lookback+horizon] --> [T, lookback+horizon, 1]
 
-val_y = val_y.unfold(
+val = val.unfold(
     dimension=0, size=window_len, step=1
 ).permute(0, 2, 1)
 
-test_y = test_y.unfold(
+test = test.unfold(
     dimension=0, size=window_len, step=1
 ).permute(0, 2, 1)
 
-print(train_y.shape) # [T, lookback+horizon, 1]
-print(val_y.shape)
-print(test_y.shape)
+print(train.shape) # [T, lookback+horizon, 1]
+print(val.shape)
+print(test.shape)
 #%%
 ### torch dataset
 train_dataset = TensorDataset(
-    train_y[:, :configs['lookback'], :], # [T, lookback, 1]
-    train_y[:, configs['lookback']:, :], # [T, horizon, 1]
+    train[:, :configs['lookback'], :], # [T, lookback, 1]
+    train[:, configs['lookback']:, :], # [T, horizon, 1]
 )
 val_dataset = TensorDataset(
-    val_y[:, :configs['lookback'], :],
-    val_y[:, configs['lookback']:, :],
+    val[:, :configs['lookback'], :],
+    val[:, configs['lookback']:, :],
 )
 test_dataset = TensorDataset(
-    test_y[:, :configs['lookback'], :],
-    test_y[:, configs['lookback']:, :],
+    test[:, :configs['lookback'], :],
+    test[:, configs['lookback']:, :],
 )
 #%%
 ### torch dataloader
@@ -154,9 +154,9 @@ class Forecaster(nn.Module):
             y_hat = self.proj(dec_out) # [B, 1, feature_dim]
             outputs.append(y_hat)
             # 다음 입력을 업데이트
-            if y is None:
+            if y is None: # validation, test
                 dec_in = y_hat
-            else:
+            else: # train
                 dec_in = y[:, t:t+1, :]
 
         return torch.cat(outputs, dim=1) # [B, horizon, feature_dim]
