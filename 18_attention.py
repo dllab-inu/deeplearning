@@ -63,3 +63,18 @@ h_tilde = fc(
 ).tanh()
 print("h_tilde.shape:", h_tilde.shape) # [B, 1, hidden_dim]
 #%%
+"""pytorch module 사용하기"""
+query = h.permute(1, 0, 2) # [B, 1, hidden_dim]
+key = enc_out # [B, T_enc, hidden_dim]
+value = enc_out # [B, T_enc, hidden_dim]
+
+attn = nn.MultiheadAttention(
+    embed_dim=hidden_dim, num_heads=1,
+    batch_first=True)
+
+attn_output, attn_output_weights = attn(query, key, value)
+
+print("attn_output.shape:", attn_output.shape) # context, [B, 1, hidden_dim]
+print("attn_output_weights.shape:", attn_output_weights.shape) # [B, 1, T_enc]
+attn_output_weights.sum(dim=-1)
+#%%
