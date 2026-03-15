@@ -141,12 +141,12 @@ class Encoder(nn.Module):
         self.enc_Wk = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
         self.enc_Wv = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
         self.enc_Wo = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
+        self.enc_ln1 = nn.LayerNorm(configs['d_model']).to(device)
 
         # 4. feed-forward network and layer normalizations
-        self.enc_ln1 = nn.LayerNorm(configs['d_model']).to(device)
         self.enc_fc1 = nn.Linear(configs['d_model'], configs['d_ff']).to(device)
-        self.enc_ln2 = nn.LayerNorm(configs['d_model']).to(device)
         self.enc_fc2 = nn.Linear(configs['d_ff'], configs['d_model']).to(device)
+        self.enc_ln2 = nn.LayerNorm(configs['d_model']).to(device)
 
     def forward(self, src):
         # src: [B, L, num_features]
@@ -205,17 +205,17 @@ class Decoder(nn.Module):
         self.dec_self_Wk = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
         self.dec_self_Wv = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
         self.dec_self_Wo = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
+        self.dec_ln1 = nn.LayerNorm(configs['d_model']).to(device)
 
         # 4. cross-attention
         self.dec_cross_Wq = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
         self.dec_cross_Wk = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
         self.dec_cross_Wv = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
         self.dec_cross_Wo = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
+        self.dec_ln2 = nn.LayerNorm(configs['d_model']).to(device)
 
         # 5. feed-forward networks and layer normalization
-        self.dec_ln1 = nn.LayerNorm(configs['d_model']).to(device)
         self.dec_fc1 = nn.Linear(configs['d_model'], configs['d_ff']).to(device)
-        self.dec_ln2 = nn.LayerNorm(configs['d_model']).to(device)
         self.dec_fc2 = nn.Linear(configs['d_ff'], configs['d_model']).to(device)
         self.dec_ln3 = nn.LayerNorm(configs['d_model']).to(device)
 

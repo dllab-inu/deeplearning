@@ -50,12 +50,12 @@ enc_Wq = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device
 enc_Wk = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
 enc_Wv = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
 enc_Wo = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
+enc_ln1 = nn.LayerNorm(configs['d_model']).to(device)
 
 # 4. feed-forward network and layer normalizations
-enc_ln1 = nn.LayerNorm(configs['d_model']).to(device)
 enc_fc1 = nn.Linear(configs['d_model'], configs['d_ff']).to(device)
-enc_ln2 = nn.LayerNorm(configs['d_model']).to(device)
 enc_fc2 = nn.Linear(configs['d_ff'], configs['d_model']).to(device)
+enc_ln2 = nn.LayerNorm(configs['d_model']).to(device)
 #%%
 ### Encoder forward process
 # B: batch_size
@@ -109,17 +109,17 @@ dec_self_Wq = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(d
 dec_self_Wk = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
 dec_self_Wv = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
 dec_self_Wo = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
+dec_ln1 = nn.LayerNorm(configs['d_model']).to(device)
 
 # 4. cross-attention
 dec_cross_Wq = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
 dec_cross_Wk = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
 dec_cross_Wv = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
 dec_cross_Wo = nn.Linear(configs['d_model'], configs['d_model'], bias=False).to(device)
+dec_ln2 = nn.LayerNorm(configs['d_model']).to(device)
 
 # 5. feed-forward networks and layer normalization
-dec_ln1 = nn.LayerNorm(configs['d_model']).to(device)
 dec_fc1 = nn.Linear(configs['d_model'], configs['d_ff']).to(device)
-dec_ln2 = nn.LayerNorm(configs['d_model']).to(device)
 dec_fc2 = nn.Linear(configs['d_ff'], configs['d_model']).to(device)
 dec_ln3 = nn.LayerNorm(configs['d_model']).to(device)
 
@@ -141,6 +141,10 @@ causal_mask = torch.triu(
     torch.ones(configs['horizon'], configs['horizon'], dtype=torch.bool, device=device), 
     diagonal=1
 ).unsqueeze(0).unsqueeze(0) # [1, 1, H, H]
+torch.triu(
+    torch.ones(5, 5, dtype=torch.bool, device=device), 
+    diagonal=1
+)
 
 # 3. self-attention
 Q = dec_self_Wq(dec_x) # [B, H, d_model]
