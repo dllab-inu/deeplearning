@@ -81,6 +81,8 @@ print("z.shape", z.shape)
 #%%
 x = torch.randn((2, 3, 4))
 y = torch.randn((2, 1, 4))
+# y = torch.randn((2, 4))
+# y = y.unsqueeze(1)
 
 z = x + y
 
