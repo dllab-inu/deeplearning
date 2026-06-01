@@ -11,7 +11,7 @@ from torchvision import datasets, transforms
 #%%
 configs = {
     'seed': 42,
-    'channels': [1, 16, 16, 1],
+    'channels': [1, 8, 16, 32],
     'latent_dim': 2,
     'epochs': 20,
     'batch_size': 256,
